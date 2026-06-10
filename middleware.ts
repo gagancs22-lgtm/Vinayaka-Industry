@@ -29,6 +29,8 @@ async function verifyToken(token: string): Promise<JWTPayload | null> {
 
 const PUBLIC_ROUTES = ["/login", "/forgot-password", "/reset-password"];
 
+const PUBLIC_API_ROUTES = ["/api/auth/login", "/api/auth/logout"];
+
 const ADMIN_ONLY_PAGE_ROUTES = ["/users", "/audit-logs"];
 
 const ADMIN_ONLY_API_ROUTES = ["/api/users", "/api/audit-logs"];
@@ -48,8 +50,12 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  // Allow public auth routes
+  // Allow public auth routes (pages and API)
   if (PUBLIC_ROUTES.some((r) => pathname.startsWith(r))) {
+    return NextResponse.next();
+  }
+
+  if (PUBLIC_API_ROUTES.some((r) => pathname.startsWith(r))) {
     return NextResponse.next();
   }
 
