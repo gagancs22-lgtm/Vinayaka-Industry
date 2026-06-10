@@ -6,10 +6,11 @@ import type { InvoiceData } from "@/lib/gst-invoice-pdf";
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const bill = await prisma.bill.findUnique({
-    where: { id: params.id },
+    where: { id },
     include: { items: true, user: { select: { name: true } } },
   });
 
@@ -68,7 +69,7 @@ export async function GET(
 
   const pdfBuffer = generateGSTInvoicePDF(data);
 
-  return new NextResponse(pdfBuffer, {
+  return new NextResponse(Buffer.from(pdfBuffer as unknown as Buffer), {
     status: 200,
     headers: {
       "Content-Type": "application/pdf",

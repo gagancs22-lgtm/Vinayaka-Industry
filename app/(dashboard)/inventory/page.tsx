@@ -82,7 +82,7 @@ export default function InventoryPage() {
 
   const stats = {
     total:    items.length,
-    inStock:  items.filter(i => i.stock > item.minStock).length,
+    inStock:  items.filter(i => i.stock > i.minStock).length,
     low:      items.filter(i => i.stock > 0 && i.stock <= i.minStock).length,
     out:      items.filter(i => i.stock === 0).length,
     value:    items.reduce((s, i) => s + i.stock * i.purchasePrice, 0),

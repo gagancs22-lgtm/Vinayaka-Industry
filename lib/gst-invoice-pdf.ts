@@ -391,7 +391,7 @@ export function generateGSTInvoicePDF(data: InvoiceData): Buffer {
   text("Invoice No.", IBX + 3 * MM, IBY + 3 * MM, { color: "#adc8e8", size: 6.5 });
   boldText(data.number, IBX + 3 * MM, IBY + 7 * MM, { color: "#ffffff", size: 10 });
 
-  const invoiceFields: [string, string][] = [
+  const invoiceFields: Array<string[]> = [
     ["Date", data.date],
     ["Due Date", data.dueDate || ""],
     ["PO Number", data.poNumber || ""],
@@ -457,7 +457,7 @@ export function generateGSTInvoicePDF(data: InvoiceData): Buffer {
   hline(MAR, curY + TRANS_H, MAR + IW);
 
   if (data.transport) {
-    const tfields: [string, string][] = [
+    const tfields: Array<string[]> = [
       ["Transport", data.transport.name || ""],
       ["Vehicle", data.transport.vehicle || ""],
       ["LR No.", data.transport.lrNo || ""],
@@ -811,7 +811,7 @@ export function generateGSTInvoicePDF(data: InvoiceData): Buffer {
 
   // ═══════════════════════════════════════════════════════════════════════════
   // 11. FOOTER (Declaration | Terms | Signatory)
-  // ═══════════════════════════════════════════════════════════════════════════
+  // ═════════════════���═════════════════════════════════════════════════════════
   const FOOTER_Y = PAGE_H - MAR - 28 * MM;
   const FOOTER_H = PAGE_H - MAR - FOOTER_Y;
   const footColW = IW / 3;

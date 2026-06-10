@@ -3,9 +3,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { createAuditLog } from "@/lib/audit";
 
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const product = await prisma.product.findUnique({
-    where: { id: params.id },
+    where: { id },
     include: {
       category: true,
       variants: { orderBy: { isDefault: "desc" } },
@@ -20,7 +21,8 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   return NextResponse.json({ data: product });
 }
 
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const userId = req.headers.get("x-user-id")!;
   const userRole = req.headers.get("x-user-role")!;
   if (userRole !== "ADMIN") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -29,7 +31,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   const { variants, ...productData } = body;
 
   const oldProduct = await prisma.product.findUnique({
-    where: { id: params.id },
+    where: { id },
     include: { variants: true },
   });
   if (!oldProduct) return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -52,7 +54,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
       for (const ch of changes) {
         await prisma.priceHistory.create({
           data: {
-            productId: params.id,
+            productId: id,
             variantId: v.id,
             priceType: ch.priceType,
             oldPrice: ch.oldPrice,
@@ -79,7 +81,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   }
 
   const updated = await prisma.product.update({
-    where: { id: params.id },
+    where: { id },
     data: {
       name: productData.name,
       barcode: productData.barcode,
@@ -94,20 +96,21 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     include: { category: true, variants: true },
   });
 
-  await createAuditLog({ userId, action: "PRODUCT_UPDATED", module: "products", entityId: params.id, oldValue: oldProduct, newValue: updated });
+  await createAuditLog({ userId, action: "PRODUCT_UPDATED", module: "products", entityId: id, oldValue: oldProduct, newValue: updated });
   return NextResponse.json({ data: updated });
 }
 
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const userId = req.headers.get("x-user-id")!;
   const userRole = req.headers.get("x-user-role")!;
   if (userRole !== "ADMIN") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-  const product = await prisma.product.findUnique({ where: { id: params.id } });
+  const product = await prisma.product.findUnique({ where: { id } });
   if (!product) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   // Soft delete — set inactive rather than hard delete to preserve bill history
-  await prisma.product.update({ where: { id: params.id }, data: { status: "INACTIVE" } });
-  await createAuditLog({ userId, action: "PRODUCT_DELETED", module: "products", entityId: params.id, oldValue: product });
+  await prisma.product.update({ where: { id }, data: { status: "INACTIVE" } });
+  await createAuditLog({ userId, action: "PRODUCT_DELETED", module: "products", entityId: id, oldValue: product });
   return NextResponse.json({ success: true });
 }

@@ -205,7 +205,7 @@ async function generateExcelReport(
   // Generate buffer
   const buffer = await workbook.xlsx.writeBuffer();
 
-  return new NextResponse(buffer as Buffer, {
+  return new NextResponse(Buffer.from(buffer as unknown as Buffer), {
     status: 200,
     headers: {
       "Content-Type":
