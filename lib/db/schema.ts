@@ -107,25 +107,45 @@ export const product = pgTable(
   })
 )
 
+export const productGroup = pgTable(
+  'productGroup',
+  {
+    id: text('id').primaryKey(),
+    name: text('name').notNull(),
+    categoryId: text('categoryId')
+      .notNull()
+      .references(() => category.id),
+    description: text('description'),
+    image: text('image'),
+    createdAt: timestamp('createdAt').notNull().defaultNow(),
+    updatedAt: timestamp('updatedAt').notNull().defaultNow(),
+  }
+)
+
 export const productVariant = pgTable(
   'productVariant',
   {
-    id: text('id').primaryKey().default(() => crypto.randomUUID()),
-    productId: text('productId').notNull().references(() => product.id),
-    name: varchar('name', { length: 255 }).notNull(),
-    sku: varchar('sku', { length: 100 }).notNull().unique(),
-    barcode: varchar('barcode', { length: 100 }).unique(),
+    id: text('id').primaryKey(),
+    productGroupId: text('productGroupId')
+      .references(() => productGroup.id),
+    name: text('name').notNull(),
+    sku: text('sku').notNull().unique(),
+    barcode: text('barcode').unique(),
+    thickness: text('thickness'),
+    length: text('length'),
+    width: text('width'),
+    weight: decimal('weight', { precision: 10, scale: 2 }),
     purchasePrice: decimal('purchasePrice', { precision: 10, scale: 2 }).notNull(),
     sellingPrice: decimal('sellingPrice', { precision: 10, scale: 2 }).notNull(),
+    dealerPrice: decimal('dealerPrice', { precision: 10, scale: 2 }),
+    wholesalePrice: decimal('wholesalePrice', { precision: 10, scale: 2 }),
+    retailPrice: decimal('retailPrice', { precision: 10, scale: 2 }),
     stock: integer('stock').notNull().default(0),
     minStock: integer('minStock').notNull().default(5),
     isDefault: boolean('isDefault').notNull().default(false),
-    createdAt: timestamp('createdAt').defaultNow().notNull(),
-    updatedAt: timestamp('updatedAt').defaultNow().notNull(),
-  },
-  (table) => ({
-    productIdIdx: index('productVariant_productId_idx').on(table.productId),
-  })
+    createdAt: timestamp('createdAt').notNull().defaultNow(),
+    updatedAt: timestamp('updatedAt').notNull().defaultNow(),
+  }
 )
 
 export const bill = pgTable(
@@ -236,22 +256,115 @@ export const expense = pgTable(
   })
 )
 
+export const priceHistory = pgTable(
+  'priceHistory',
+  {
+    id: text('id').primaryKey(),
+    productGroupId: text('productGroupId').references(() => productGroup.id),
+    variantId: text('variantId').references(() => productVariant.id),
+    priceType: text('priceType').notNull(),
+    oldPrice: decimal('oldPrice', { precision: 10, scale: 2 }),
+    newPrice: decimal('newPrice', { precision: 10, scale: 2 }).notNull(),
+    changedBy: text('changedBy').references(() => user.id),
+    changedAt: timestamp('changedAt').notNull().defaultNow(),
+  }
+)
+
+export const supplier = pgTable(
+  'supplier',
+  {
+    id: text('id').primaryKey(),
+    name: text('name').notNull().unique(),
+    email: text('email'),
+    phone: text('phone'),
+    address: text('address'),
+    city: text('city'),
+    state: text('state'),
+    createdAt: timestamp('createdAt').notNull().defaultNow(),
+    updatedAt: timestamp('updatedAt').notNull().defaultNow(),
+  }
+)
+
+export const supplierLedger = pgTable(
+  'supplierLedger',
+  {
+    id: text('id').primaryKey(),
+    supplierId: text('supplierId')
+      .notNull()
+      .references(() => supplier.id),
+    purchaseAmount: decimal('purchaseAmount', { precision: 12, scale: 2 }).notNull(),
+    paidAmount: decimal('paidAmount', { precision: 12, scale: 2 }).notNull().default('0'),
+    outstandingAmount: decimal('outstandingAmount', { precision: 12, scale: 2 }).notNull(),
+    paymentDate: timestamp('paymentDate'),
+    notes: text('notes'),
+    createdAt: timestamp('createdAt').notNull().defaultNow(),
+    updatedAt: timestamp('updatedAt').notNull().defaultNow(),
+  }
+)
+
+export const customer = pgTable(
+  'customer',
+  {
+    id: text('id').primaryKey(),
+    name: text('name').notNull(),
+    email: text('email'),
+    phone: text('phone'),
+    customerType: text('customerType').notNull().default('RETAIL'),
+    address: text('address'),
+    city: text('city'),
+    state: text('state'),
+    createdAt: timestamp('createdAt').notNull().defaultNow(),
+    updatedAt: timestamp('updatedAt').notNull().defaultNow(),
+  }
+)
+
+export const customerLedger = pgTable(
+  'customerLedger',
+  {
+    id: text('id').primaryKey(),
+    customerId: text('customerId')
+      .notNull()
+      .references(() => customer.id),
+    totalPurchases: decimal('totalPurchases', { precision: 12, scale: 2 }).notNull().default('0'),
+    paidAmount: decimal('paidAmount', { precision: 12, scale: 2 }).notNull().default('0'),
+    outstandingAmount: decimal('outstandingAmount', { precision: 12, scale: 2 }).notNull().default('0'),
+    lastPaymentDate: timestamp('lastPaymentDate'),
+    createdAt: timestamp('createdAt').notNull().defaultNow(),
+    updatedAt: timestamp('updatedAt').notNull().defaultNow(),
+  }
+)
+
+export const stockMovement = pgTable(
+  'stockMovement',
+  {
+    id: text('id').primaryKey(),
+    variantId: text('variantId')
+      .notNull()
+      .references(() => productVariant.id),
+    type: text('type').notNull(),
+    quantity: integer('quantity').notNull(),
+    reason: text('reason'),
+    referenceId: text('referenceId'),
+    notes: text('notes'),
+    createdBy: text('createdBy').references(() => user.id),
+    createdAt: timestamp('createdAt').notNull().defaultNow(),
+  }
+)
+
 export const auditLog = pgTable(
   'auditLog',
   {
-    id: text('id').primaryKey().default(() => crypto.randomUUID()),
-    userId: text('userId').notNull().references(() => user.id),
-    action: varchar('action', { length: 100 }).notNull(),
-    module: varchar('module', { length: 100 }).notNull(),
+    id: text('id').primaryKey(),
+    userId: text('userId')
+      .notNull()
+      .references(() => user.id),
+    action: text('action').notNull(),
+    module: text('module').notNull(),
     entityId: text('entityId'),
     oldValue: text('oldValue'),
     newValue: text('newValue'),
-    createdAt: timestamp('createdAt').defaultNow().notNull(),
-  },
-  (table) => ({
-    userIdIdx: index('auditLog_userId_idx').on(table.userId),
-    createdAtIdx: index('auditLog_createdAt_idx').on(table.createdAt),
-  })
+    createdAt: timestamp('createdAt').notNull().defaultNow(),
+  }
 )
 
 // ═══════════════════════════════════════════════════════════════════════════
