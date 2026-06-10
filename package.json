@@ -9,7 +9,9 @@
     "lint": "next lint",
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
-    "db:seed": "tsx prisma/seed.ts"
+    "db:seed": "tsx prisma/seed.ts",
+    "seed-dummy-tools": "node scripts/seed-dummy-tools.mjs",
+    "remove-dummy-tools": "node scripts/remove-dummy-tools.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.6.0",

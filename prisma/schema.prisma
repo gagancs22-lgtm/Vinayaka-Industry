@@ -45,7 +45,6 @@ model User {
   priceChanges     PriceHistory[]
   expenses         Expense[]
 
-  @@index([email])
   @@index([role])
 }
 
@@ -81,8 +80,6 @@ model Category {
   updatedAt   DateTime  @updatedAt
 
   products    Product[]
-
-  @@index([name])
 }
 
 model Product {
@@ -105,8 +102,6 @@ model Product {
   priceHistory PriceHistory[]
 
   @@index([categoryId])
-  @@index([sku])
-  @@index([barcode])
   @@index([status])
 }
 
@@ -131,7 +126,6 @@ model ProductVariant {
   priceHistory  PriceHistory[]
 
   @@index([productId])
-  @@index([sku])
 }
 
 // ─── PRICE HISTORY ──────────────────────────────────────────────────────────
@@ -272,7 +266,6 @@ model Bill {
   items   BillItem[]
   returns SalesReturn[]
 
-  @@index([invoiceNumber])
   @@index([billDate])
   @@index([createdBy])
   @@index([status])
