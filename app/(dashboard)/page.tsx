@@ -85,46 +85,46 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="p-6 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+      <div className="safe-p grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 safe-gap">
         {Array.from({ length: 6 }).map((_, i) => (
-          <div key={i} className="h-28 bg-white dark:bg-slate-800 rounded-2xl animate-pulse" />
+          <div key={i} className="h-24 sm:h-28 bg-white dark:bg-slate-800 rounded-xl sm:rounded-2xl animate-pulse" />
         ))}
       </div>
     );
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="safe-p space-y-4 sm:space-y-6">
       {/* Summary Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 safe-gap">
         {summaryCards.map((card, i) => (
           <motion.div
             key={card.key}
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.06 }}
-            className="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-sm border border-slate-100 dark:border-slate-700"
+            className="bg-white dark:bg-slate-800 rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-sm border border-slate-100 dark:border-slate-700 hover:shadow-md transition-shadow"
           >
-            <div className={`w-9 h-9 rounded-xl ${CARD_COLORS[card.key]} flex items-center justify-center text-white mb-3`}>
+            <div className={`w-8 h-8 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl ${CARD_COLORS[card.key]} flex items-center justify-center text-white mb-2 sm:mb-3 flex-shrink-0`}>
               {CARD_ICONS[card.key]}
             </div>
-            <p className="text-2xl font-bold text-slate-800 dark:text-white leading-tight">
+            <p className="text-xl sm:text-2xl font-bold text-slate-800 dark:text-white leading-tight">
               {card.value}
             </p>
-            <p className="text-xs font-semibold text-slate-500 mt-1">{card.label}</p>
-            <p className="text-xs text-slate-400 mt-0.5">{card.sub}</p>
+            <p className="text-xs font-semibold text-slate-500 mt-1 line-clamp-1">{card.label}</p>
+            <p className="text-xs text-slate-400 mt-0.5 line-clamp-1">{card.sub}</p>
           </motion.div>
         ))}
       </div>
 
       {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 safe-gap">
         {/* Sales Trend */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="lg:col-span-2 bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-sm border border-slate-100 dark:border-slate-700"
+          className="lg:col-span-2 bg-white dark:bg-slate-800 rounded-xl sm:rounded-2xl p-3 sm:p-4 md:p-5 shadow-sm border border-slate-100 dark:border-slate-700"
         >
           <div className="flex items-center justify-between mb-5">
             <div>
@@ -162,7 +162,7 @@ export default function DashboardPage() {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
-          className="bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-sm border border-slate-100 dark:border-slate-700"
+          className="bg-white dark:bg-slate-800 rounded-xl sm:rounded-2xl p-3 sm:p-4 md:p-5 shadow-sm border border-slate-100 dark:border-slate-700"
         >
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-bold text-slate-800 dark:text-white">Top Products</h3>
@@ -198,7 +198,7 @@ export default function DashboardPage() {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
-          className="bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-sm border border-slate-100 dark:border-slate-700"
+          className="bg-white dark:bg-slate-800 rounded-xl sm:rounded-2xl p-3 sm:p-4 md:p-5 shadow-sm border border-slate-100 dark:border-slate-700"
         >
           <h3 className="font-bold text-slate-800 dark:text-white mb-4">Monthly Sales Comparison</h3>
           <ResponsiveContainer width="100%" height={180}>

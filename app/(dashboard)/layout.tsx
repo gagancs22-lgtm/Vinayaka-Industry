@@ -78,7 +78,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     <div className={`
       flex flex-col h-full bg-[#0f172a] border-r border-slate-800
       transition-all duration-300 ease-in-out
-      ${collapsed ? "w-16" : "w-60"}
+      ${collapsed ? "w-16" : "w-60 sm:w-72"}
     `}>
       {/* Logo */}
       <div className="flex items-center gap-3 px-4 h-16 border-b border-slate-800">
@@ -178,9 +178,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Header */}
-        <header className="h-16 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 flex items-center px-4 gap-3 flex-shrink-0 shadow-sm">
+        <header className="h-14 sm:h-16 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 flex items-center px-3 sm:px-4 gap-2 sm:gap-3 flex-shrink-0 shadow-sm">
           <button
-            className="md:hidden text-slate-500 hover:text-slate-700"
+            className="md:hidden p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
             onClick={() => setMobileOpen(true)}
           >
             <Menu className="w-5 h-5" />
@@ -188,21 +188,23 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <div className="flex-1" />
           <button
             onClick={() => setDark(!dark)}
-            className="w-9 h-9 rounded-lg flex items-center justify-center text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700"
+            className="p-2 rounded-lg text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
           >
             {dark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
           </button>
-          <button className="relative w-9 h-9 rounded-lg flex items-center justify-center text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700">
+          <button className="relative p-2 rounded-lg text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
             <Bell className="w-4 h-4" />
             {notifications > 0 && (
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full" />
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full animate-pulse" />
             )}
           </button>
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-auto">
-          {children}
+        <main className="flex-1 overflow-auto overscroll-contain">
+          <div className="min-h-full">
+            {children}
+          </div>
         </main>
       </div>
     </div>
