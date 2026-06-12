@@ -1,57 +1,72 @@
 // app/api/expenses/route.ts
-import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import { NextRequest, NextResponse } from 'next/server'
+import { db } from '@/lib/db'
+import { expense } from '@/lib/db/schema'
+import { desc, and, gte, lte } from 'drizzle-orm'
 
 export async function GET(req: NextRequest) {
-  const { searchParams } = new URL(req.url);
-  const page = parseInt(searchParams.get("page") || "1");
-  const limit = parseInt(searchParams.get("limit") || "20");
-  const category = searchParams.get("category");
-  const from = searchParams.get("from");
-  const to   = searchParams.get("to");
+  try {
+    const { searchParams } = new URL(req.url)
+    const category = searchParams.get('category')
+    const from = searchParams.get('from')
+    const to = searchParams.get('to')
 
-  const where: Record<string, unknown> = {};
-  if (category) where.category = category;
-  if (from || to) {
-    where.date = {
-      ...(from && { gte: new Date(from) }),
-      ...(to   && { lte: new Date(to + "T23:59:59.999Z") }),
-    };
+    let expenses = await db
+      .select()
+      .from(expense)
+      .orderBy(desc(expense.createdAt))
+      .limit(100)
+
+    // Filter in memory
+    if (category) {
+      expenses = expenses.filter(e => e.category === category)
+    }
+
+    if (from || to) {
+      const startDate = from ? new Date(from) : undefined
+      const endDate = to ? new Date(to) : undefined
+      expenses = expenses.filter(e => {
+        if (startDate && e.date < startDate) return false
+        if (endDate && e.date > endDate) return false
+        return true
+      })
+    }
+
+    const total = expenses.reduce((sum, exp) => sum + parseFloat(exp.amount.toString()), 0)
+    return NextResponse.json({ data: expenses, total })
+  } catch (error) {
+    console.error('Error fetching expenses:', error)
+    return NextResponse.json({ error: 'Failed to fetch expenses' }, { status: 500 })
   }
-
-  const [expenses, total, aggregate] = await Promise.all([
-    prisma.expense.findMany({
-      where,
-      include: { user: { select: { name: true } } },
-      orderBy: { date: "desc" },
-      skip: (page - 1) * limit,
-      take: limit,
-    }),
-    prisma.expense.count({ where }),
-    prisma.expense.aggregate({ where, _sum: { amount: true } }),
-  ]);
-
-  return NextResponse.json({
-    data: expenses,
-    total: aggregate._sum.amount || 0,
-    pagination: { page, limit, total, pages: Math.ceil(total / limit) },
-  });
 }
 
 export async function POST(req: NextRequest) {
-  const userId = req.headers.get("x-user-id")!;
-  const { category, amount, description, date } = await req.json();
-  if (!category || !amount || !date) {
-    return NextResponse.json({ error: "Category, amount, and date required" }, { status: 400 });
+  try {
+    const body = await req.json()
+    const { category, amount, description, date, paymentMethod, status } = body
+
+    if (!category || !amount || !date) {
+      return NextResponse.json({ error: 'Category, amount, and date required' }, { status: 400 })
+    }
+
+    const newExpense = await db
+      .insert(expense)
+      .values({
+        id: `exp-${Date.now()}`,
+        expenseNumber: `EXP-${Date.now()}`,
+        category,
+        amount: parseFloat(amount),
+        description,
+        date: new Date(date),
+        paymentMethod: paymentMethod || 'CASH',
+        status: status || 'APPROVED',
+        createdBy: 'admin-1',
+      })
+      .returning()
+
+    return NextResponse.json({ data: newExpense[0] }, { status: 201 })
+  } catch (error) {
+    console.error('Error creating expense:', error)
+    return NextResponse.json({ error: 'Failed to create expense' }, { status: 500 })
   }
-  const expense = await prisma.expense.create({
-    data: {
-      category,
-      amount: Number(amount),
-      description,
-      date: new Date(date),
-      createdBy: userId,
-    },
-  });
-  return NextResponse.json({ data: expense }, { status: 201 });
 }

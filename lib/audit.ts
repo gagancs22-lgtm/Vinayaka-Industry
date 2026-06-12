@@ -1,32 +1,34 @@
 // lib/audit.ts
-import { prisma } from "@/lib/db";
+import { db } from "@/lib/db"
+import { auditLog } from "@/lib/db/schema"
 
 interface AuditParams {
-  userId: string;
-  action: string;
-  module: string;
-  entityId?: string;
-  oldValue?: unknown;
-  newValue?: unknown;
-  ipAddress?: string;
+  userId: string
+  action: string
+  module: string
+  entityId?: string
+  oldValue?: unknown
+  newValue?: unknown
+  ipAddress?: string
 }
 
 export async function createAuditLog(params: AuditParams) {
   try {
-    await prisma.auditLog.create({
-      data: {
+    await db
+      .insert(auditLog)
+      .values({
+        id: `audit-${Date.now()}`,
         userId: params.userId,
         action: params.action,
         module: params.module,
         entityId: params.entityId,
-        oldValue: params.oldValue ? JSON.parse(JSON.stringify(params.oldValue)) : undefined,
-        newValue: params.newValue ? JSON.parse(JSON.stringify(params.newValue)) : undefined,
-        ipAddress: params.ipAddress,
-      },
-    });
+        oldValue: params.oldValue ? JSON.stringify(params.oldValue) : null,
+        newValue: params.newValue ? JSON.stringify(params.newValue) : null,
+        createdAt: new Date(),
+      })
   } catch (err) {
     // Audit logging should never break the main flow
-    console.error("Audit log failed:", err);
+    console.error("Audit log failed:", err)
   }
 }
 

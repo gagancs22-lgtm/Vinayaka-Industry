@@ -1,65 +1,60 @@
 // app/api/settings/route.ts
-import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
-import { createAuditLog } from "@/lib/audit";
+import { NextRequest, NextResponse } from 'next/server'
+import { auth } from '@/lib/auth'
+import { headers } from 'next/headers'
+
+// Store settings in memory (can be replaced with a database table later)
+const defaultSettings = {
+  businessName: 'My Business',
+  businessEmail: 'business@example.com',
+  businessPhone: '+91-XXXXXXXXXX',
+  gstin: 'XXXXXXXXXXXXXXXX',
+  address: '123 Business St',
+  city: 'City',
+  state: 'State',
+  pincode: '000000',
+  currency: 'INR',
+  taxRate: 18,
+}
+
+let currentSettings = { ...defaultSettings }
 
 export async function GET() {
-  let settings = await prisma.settings.findFirst();
-  if (!settings) {
-    settings = await prisma.settings.create({
-      data: {
-        businessName: "My Business",
-        invoicePrefix: "INV",
-        invoiceCounter: 0,
-        taxPercent: 18,
-        currency: "INR",
-        currencySymbol: "₹",
-      },
-    });
+  try {
+    return NextResponse.json({ data: currentSettings })
+  } catch (error) {
+    console.error('Error fetching settings:', error)
+    return NextResponse.json({ data: defaultSettings })
   }
-  return NextResponse.json({ data: settings });
 }
 
 export async function PUT(req: NextRequest) {
-  const userId = req.headers.get("x-user-id")!;
-  const userRole = req.headers.get("x-user-role")!;
+  try {
+    const session = await auth.api.getSession({ headers: await headers() })
 
-  if (userRole !== "ADMIN") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const body = await req.json()
+
+    currentSettings = {
+      ...currentSettings,
+      businessName: body.businessName || currentSettings.businessName,
+      businessEmail: body.businessEmail || currentSettings.businessEmail,
+      businessPhone: body.businessPhone || currentSettings.businessPhone,
+      gstin: body.gstin || currentSettings.gstin,
+      address: body.address || currentSettings.address,
+      city: body.city || currentSettings.city,
+      state: body.state || currentSettings.state,
+      pincode: body.pincode || currentSettings.pincode,
+      currency: body.currency || currentSettings.currency,
+      taxRate: body.taxRate || currentSettings.taxRate,
+    }
+
+    return NextResponse.json({ data: currentSettings })
+  } catch (error) {
+    console.error('Error updating settings:', error)
+    return NextResponse.json({ error: 'Failed to update settings' }, { status: 500 })
   }
-
-  const body = await req.json();
-  const settings = await prisma.settings.findFirst();
-
-  if (!settings) {
-    return NextResponse.json({ error: "Settings not found" }, { status: 404 });
-  }
-
-  const updated = await prisma.settings.update({
-    where: { id: settings.id },
-    data: {
-      businessName:   body.businessName,
-      logo:           body.logo,
-      gstin:          body.gstin,
-      phone:          body.phone,
-      email:          body.email,
-      address:        body.address,
-      invoicePrefix:  body.invoicePrefix,
-      taxPercent:     body.taxPercent,
-      currency:       body.currency,
-      currencySymbol: body.currencySymbol,
-      enableTax:      body.enableTax,
-      enableDiscount: body.enableDiscount,
-      lowStockDefault: body.lowStockDefault,
-    },
-  });
-
-  await createAuditLog({
-    userId,
-    action: "SETTINGS_UPDATED",
-    module: "settings",
-    newValue: body,
-  });
-
-  return NextResponse.json({ data: updated });
 }

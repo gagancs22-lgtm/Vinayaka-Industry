@@ -1,48 +1,58 @@
 // app/api/suppliers/route.ts
-import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import { NextRequest, NextResponse } from 'next/server'
+import { db } from '@/lib/db'
+import { supplier } from '@/lib/db/schema'
+import { desc, ilike } from 'drizzle-orm'
 
 export async function GET(req: NextRequest) {
-  const { searchParams } = new URL(req.url);
-  const search = searchParams.get("search") || "";
-  const page = parseInt(searchParams.get("page") || "1");
-  const limit = parseInt(searchParams.get("limit") || "20");
+  try {
+    const { searchParams } = new URL(req.url)
+    const search = searchParams.get('search') || ''
 
-  const where = search
-    ? {
-        OR: [
-          { name: { contains: search, mode: "insensitive" as const } },
-          { phone: { contains: search, mode: "insensitive" as const } },
-          { email: { contains: search, mode: "insensitive" as const } },
-        ],
-      }
-    : {};
+    let query = db
+      .select()
+      .from(supplier)
 
-  const [suppliers, total] = await Promise.all([
-    prisma.supplier.findMany({
-      where,
-      include: {
-        _count: { select: { purchases: true } },
-      },
-      orderBy: { name: "asc" },
-      skip: (page - 1) * limit,
-      take: limit,
-    }),
-    prisma.supplier.count({ where }),
-  ]);
+    if (search) {
+      query = query.where(ilike(supplier.name, `%${search}%`))
+    }
 
-  return NextResponse.json({
-    data: suppliers,
-    pagination: { page, limit, total, pages: Math.ceil(total / limit) },
-  });
+    const suppliers = await query
+      .orderBy(supplier.name)
+      .limit(100)
+
+    return NextResponse.json({ data: suppliers })
+  } catch (error) {
+    console.error('Error fetching suppliers:', error)
+    return NextResponse.json({ error: 'Failed to fetch suppliers' }, { status: 500 })
+  }
 }
 
 export async function POST(req: NextRequest) {
-  const body = await req.json();
-  const { name, contactPerson, phone, email, address, gstin } = body;
-  if (!name?.trim()) return NextResponse.json({ error: "Name required" }, { status: 400 });
-  const supplier = await prisma.supplier.create({
-    data: { name: name.trim(), contactPerson, phone, email, address, gstin },
-  });
-  return NextResponse.json({ data: supplier }, { status: 201 });
+  try {
+    const body = await req.json()
+    const { name, email, phone, address, city, state } = body
+
+    if (!name?.trim()) {
+      return NextResponse.json({ error: 'Name required' }, { status: 400 })
+    }
+
+    const newSupplier = await db
+      .insert(supplier)
+      .values({
+        id: `supp-${Date.now()}`,
+        name: name.trim(),
+        email,
+        phone,
+        address,
+        city,
+        state,
+      })
+      .returning()
+
+    return NextResponse.json({ data: newSupplier[0] }, { status: 201 })
+  } catch (error) {
+    console.error('Error creating supplier:', error)
+    return NextResponse.json({ error: 'Failed to create supplier' }, { status: 500 })
+  }
 }
